@@ -133,13 +133,14 @@ void setNextInterruptInterval() {
   if ( remainingSteppersFlag == 0 ) {
     OCR1A = 65500;
   }
-  //I think this should be an else statement. Will test later
+  //Im fairly sure this should be an else statement. Will test later.
   OCR1A = mind;
 }
 
-//The interrupt function itself. Contains black magic
-ISR(TIMER1_COMPA_vect)
-{
+//The interrupt function itself. Contains black magic. 
+//Basically, just steps and calculates when the next time to trigger is
+//Contains all the math of the acceration curve
+ISR(TIMER1_COMPA_vect){
   unsigned int tmpCtr = OCR1A;
 
   OCR1A = 65500;
