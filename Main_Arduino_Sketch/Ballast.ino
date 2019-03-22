@@ -44,7 +44,6 @@ struct stepperInfo {
   volatile unsigned int stepCount;         // number of steps completed in current movement
 };
 
-
 //Define basic IO control
 void aStep() {
   A_STEP_HIGH
@@ -62,9 +61,24 @@ void bDir(int dir) {
   digitalWrite(B_DIR_PIN, dir);
 }
 
+
+
 //Generate stepper info for 2 steppers
 #define NUM_STEPPERS 2
 volatile stepperInfo steppers[NUM_STEPPERS];
+
+
+//Calling stepperInfo makes a bad. Internet says use a header file. Will do l8r
+void resetStepperInfo( stepperInfo& si ){
+  si.n = 0;
+  si.d = 0;
+  si.di = 0;
+  si.stepCount = 0;
+  si.rampUpStepCount = 0;
+  si.totalSteps = 0;
+  si.stepPosition = 0;
+  si.movementDone = false;
+}
 
 //Initialize pins and triggers
 void ballaskSetup() {
@@ -105,6 +119,7 @@ void ballaskSetup() {
 
 //Note flag is a byte not a bit
 volatile byte nextStepperFlag = 0;
+volatile byte remainingSteppersFlag = 0;
 
 //This function is called to determine when the next time interrupt needs to be called
 void setNextInterruptInterval() {
@@ -189,6 +204,15 @@ ISR(TIMER1_COMPA_vect){
   setNextInterruptInterval();
 
   TCNT1  = 0;
+}
+
+void prepareMovement(int whichMotor, int steps) {
+  volatile stepperInfo& si = steppers[whichMotor];
+  si.dirFunc( steps < 0 ? HIGH : LOW );
+  si.dir = steps > 0 ? 1 : -1;
+  si.totalSteps = abs(steps);
+  resetStepper(si);
+  remainingSteppersFlag |= (1 << whichMotor);
 }
 
 //Simple function to wait for a movement to be completed
