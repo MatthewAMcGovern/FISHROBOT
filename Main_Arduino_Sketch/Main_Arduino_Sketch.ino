@@ -1,3 +1,5 @@
+#include "struct.h"
+
 void setup() {
   ballaskSetup();
 }

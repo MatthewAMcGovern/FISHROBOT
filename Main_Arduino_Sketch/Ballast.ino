@@ -20,30 +20,6 @@
 #define TIMER1_INTERRUPTS_OFF   TIMSK1 &= ~(1 << OCIE1A);
 
 //Group stepper information
-struct stepperInfo {
-  // externally defined parameters
-  float acceleration;
-  volatile unsigned int minStepInterval;   // ie. max speed, smaller is faster
-  void (*dirFunc)(int);
-  void (*stepFunc)();
-
-  // derived parameters
-  unsigned int c0;                // step interval for first step, determines acceleration
-  long stepPosition;              // current position of stepper (total of all movements taken so far)
-
-  // per movement variables (only changed once per movement)
-  volatile int dir;                        // current direction of movement, used to keep track of position
-  volatile unsigned int totalSteps;        // number of steps requested for current movement
-  volatile bool movementDone = false;      // true if the current movement has been completed (used by main program to wait for completion)
-  volatile unsigned int rampUpStepCount;   // number of steps taken to reach either max speed, or half-way to the goal (will be zero until this number is known)
-
-  // per iteration variables (potentially changed every interrupt)
-  volatile unsigned int n;                 // index in acceleration curve, used to calculate next interval
-  volatile float d;                        // current interval length
-  volatile unsigned long di;               // above variable truncated
-  volatile unsigned int stepCount;         // number of steps completed in current movement
-};
-
 
 //Define basic IO control
 void aStep() {
@@ -62,13 +38,15 @@ void bDir(int dir) {
   digitalWrite(B_DIR_PIN, dir);
 }
 
+
+#define NUM_STEPPERS 2
 volatile stepperInfo steppers[NUM_STEPPERS];
 
 
 //O.K. after a lot of trial and error I have learned that data types defined in
 //a tab will not be applied to the scope of that tab. I think this is an issue with the
 //compiler. 
-void resetStepper(volatile local stepperInfo& si) {
+void resetStepper(volatile stepperInfo& si) {
   si.c0 = si.acceleration;
   si.d = si.c0;
   si.di = si.d;
