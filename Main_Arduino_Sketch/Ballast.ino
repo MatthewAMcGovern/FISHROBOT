@@ -44,6 +44,7 @@ struct stepperInfo {
   volatile unsigned int stepCount;         // number of steps completed in current movement
 };
 
+
 //Define basic IO control
 void aStep() {
   A_STEP_HIGH
@@ -61,22 +62,19 @@ void bDir(int dir) {
   digitalWrite(B_DIR_PIN, dir);
 }
 
-
-
-//Generate stepper info for 2 steppers
-#define NUM_STEPPERS 2
 volatile stepperInfo steppers[NUM_STEPPERS];
 
 
-//Calling stepperInfo makes a bad. Internet says use a header file. Will do l8r
-void resetStepperInfo( stepperInfo& si ){
-  si.n = 0;
-  si.d = 0;
-  si.di = 0;
+//O.K. after a lot of trial and error I have learned that data types defined in
+//a tab will not be applied to the scope of that tab. I think this is an issue with the
+//compiler. 
+void resetStepper(volatile local stepperInfo& si) {
+  si.c0 = si.acceleration;
+  si.d = si.c0;
+  si.di = si.d;
   si.stepCount = 0;
+  si.n = 0;
   si.rampUpStepCount = 0;
-  si.totalSteps = 0;
-  si.stepPosition = 0;
   si.movementDone = false;
 }
 
@@ -114,9 +112,10 @@ void ballaskSetup() {
   steppers[1].stepFunc = aStep;
   steppers[1].acceleration = 4000;
   steppers[1].minStepInterval = 50;
-  
 }
 
+//Generate stepper info for 2 steppers
+#define NUM_STEPPERS 2
 //Note flag is a byte not a bit
 volatile byte nextStepperFlag = 0;
 volatile byte remainingSteppersFlag = 0;
@@ -231,5 +230,6 @@ void heyLetsTestTheMotor(){
   prepareMovement( 0, 0 );
   prepareMovement( 1, 1600 );
 }
+
 
 
