@@ -205,6 +205,7 @@ void heyLetsTestTheMotor(){
   runAndWait();
   prepareMovement( 0, 0 );
   prepareMovement( 1, 1600 );
+  runAndWait();
 }
 
 
