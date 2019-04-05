@@ -1,19 +1,20 @@
 //SEE 'iforce2d coridinated stepper motor control' for partial source code
 //This code takes control of timer1. Do not use timer1 for anything other than stepper control
-#define A_DIR_PIN          4
-#define A_STEP_PIN         5
-#define A_ENABLE_PIN       6
+//A is front B is back
+#define A_DIR_PIN          5
+#define A_STEP_PIN         2
 
-#define B_DIR_PIN          7
-#define B_STEP_PIN         8
-#define B_ENABLE_PIN       9
+#define B_DIR_PIN          6
+#define B_STEP_PIN         3
+
+#define ENABLE_PIN         8
 
 //Macro to quickly switch pins high/low
-#define A_STEP_HIGH             PORTD |=  0b00010000;
-#define A_STEP_LOW              PORTD &= ~0b00010000;
+#define A_STEP_HIGH             PORTD |=  0b00000010;
+#define A_STEP_LOW              PORTD &= ~0b00000010;
 
-#define B_STEP_HIGH             PORTB |=  0b10000000;
-#define B_STEP_LOW              PORTB &= ~0b10000000;
+#define B_STEP_HIGH             PORTD |=  0b10000100;
+#define B_STEP_LOW              PORTD &= ~0b10000100;
 
 //Turns Interrupt1 on/off
 #define TIMER1_INTERRUPTS_ON    TIMSK1 |=  (1 << OCIE1A);
@@ -58,15 +59,13 @@ void resetStepper(volatile stepperInfo& si) {
 void ballaskSetup() {
   pinMode(A_STEP_PIN,   OUTPUT);
   pinMode(A_DIR_PIN,    OUTPUT);
-  pinMode(A_ENABLE_PIN, OUTPUT);
 
   pinMode(B_STEP_PIN,   OUTPUT);
   pinMode(B_DIR_PIN,    OUTPUT);
-  pinMode(B_ENABLE_PIN, OUTPUT);
 
-  digitalWrite(A_ENABLE_PIN, LOW);
-  digitalWrite(B_ENABLE_PIN, LOW);
+  pinMode(ENABLE_PIN, OUTPUT);
 
+  digitalWrite(ENABLE_PIN, LOW);
   //black magic I half understand
   noInterrupts();
   TCCR1A = 0;
