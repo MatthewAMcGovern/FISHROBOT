@@ -19,8 +19,6 @@
 #define TIMER1_INTERRUPTS_OFF   TIMSK1 &= ~(1 << OCIE1A);
 
 
-
-
 void aStep() {
   A_STEP_HIGH
   A_STEP_LOW
@@ -65,8 +63,8 @@ void ballaskSetup() {
 
   steppers[0].dirFunc = bDir;
   steppers[0].stepFunc = bStep;
-  steppers[0].acceleration = 1000;
-  steppers[0].minStepInterval = 50;
+  steppers[0].acceleration = 4000;
+  steppers[0].minStepInterval = 2000;
 
   steppers[1].dirFunc = aDir;
   steppers[1].stepFunc = aStep;
@@ -183,6 +181,7 @@ void runAndWait() {
   setNextInterruptInterval();
   while ( remainingSteppersFlag );
 }
+
 
 void stepperTest() {
 
