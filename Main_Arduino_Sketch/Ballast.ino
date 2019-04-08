@@ -1,12 +1,12 @@
 // For RAMPS 1.4
 #define A_DIR_PIN          5
-#define A_STEP_PIN         2
-#define A_LIMIT            9
+#define A_STEP_PIN         9
+#define A_LIMIT            2
 
 
 #define B_DIR_PIN          6
-#define B_STEP_PIN         3
-#define B_LIMIT           10
+#define B_STEP_PIN        10
+#define B_LIMIT            3
 
 
 #define ENABLE_PIN         8
@@ -49,12 +49,16 @@ volatile stepperInfo steppers[NUM_STEPPERS];
 void ballaskSetup() {
   pinMode(A_STEP_PIN,   OUTPUT);
   pinMode(A_DIR_PIN,    OUTPUT);
-  pinMode(ENABLE_PIN, OUTPUT);
-
+  pinMode(A_LIMIT, INPUT_PULLUP);
   pinMode(B_STEP_PIN,   OUTPUT);
   pinMode(B_DIR_PIN,    OUTPUT);
+  pinMode(B_LIMIT, INPUT_PULLUP);
+  pinMode(ENABLE_PIN, OUTPUT);
 
   digitalWrite(ENABLE_PIN, LOW);
+
+  attachInterrupt(digitalPinToInterrupt(A_LIMIT), ALimitTriggered, RISING);
+  attachInterrupt(digitalPinToInterrupt(B_LIMIT), BLimitTriggered, RISING);
 
   noInterrupts();
   TCCR1A = 0;
@@ -206,20 +210,22 @@ void stepperTest() {
   delay(600);
 }
 
-void calibrateBallasts(){
+void calibrateBallasts(bool ShouldWait){
   prepareMovement(1, 99999999);
-  prepareMovement(1, 99999999);
+  prepareMovement(0, 99999999);
   setNextInterruptInterval();
-  while (remainingSteppersFlag);
-  
+  while (remainingSteppersFlag && ShouldWait);
 }
 
+void ALimitTriggered(){
+  resetStepper(steppers[0]);
+}
 
+void BLimitTriggered(){
+  resetStepper(steppers[1]);
+}
 
-
-
-
-
+//PID SECTION BEGINS
 
 
 
