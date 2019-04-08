@@ -1,11 +1,16 @@
 // For RAMPS 1.4
 #define A_DIR_PIN          5
 #define A_STEP_PIN         2
+#define A_LIMIT            9
+
 
 #define B_DIR_PIN          6
 #define B_STEP_PIN         3
+#define B_LIMIT           10
+
 
 #define ENABLE_PIN         8
+
 
 //Macro to quickly switch pins high/low
 #define A_STEP_HIGH             PORTD |=  0b00000100;
@@ -64,12 +69,12 @@ void ballaskSetup() {
   steppers[0].dirFunc = bDir;
   steppers[0].stepFunc = bStep;
   steppers[0].acceleration = 4000;
-  steppers[0].minStepInterval = 2000;
+  steppers[0].minStepInterval = 200;
 
   steppers[1].dirFunc = aDir;
   steppers[1].stepFunc = aStep;
   steppers[1].acceleration = 4000;
-  steppers[1].minStepInterval = 2000;
+  steppers[1].minStepInterval = 200;
 }
 
 void resetStepper(volatile stepperInfo& si) {
@@ -187,12 +192,29 @@ void stepperTest() {
 
   TIMER1_INTERRUPTS_ON
 
-  prepareMovement( 1,  800 );
-  runAndWait();
+  prepareMovement( 1,  10 );
+  setNextInterruptInterval();
+  delay(600);
+  prepareMovement( 1,  -10 );
+  setNextInterruptInterval();
+  delay(600);
   prepareMovement( 1,  -800 );
-  runAndWait();
-
+  setNextInterruptInterval();
+  delay(600);
+  prepareMovement( 1,  800 );
+  setNextInterruptInterval();
+  delay(600);
 }
+
+void calibrateBallasts(){
+  prepareMovement(1, 99999999);
+  prepareMovement(1, 99999999);
+  setNextInterruptInterval();
+  while (remainingSteppersFlag);
+  
+}
+
+
 
 
 
