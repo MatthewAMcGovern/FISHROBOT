@@ -1,8 +1,3 @@
-<<<<<<< Updated upstream
-void setup() {
-  // put your setup code here, to run once:
-
-=======
 #include <PID_v1.h>
 
 
@@ -25,7 +20,7 @@ double potLfilt;
 double potRfilt;
 double potLfiltprev;
 double potRfiltprev;
-double prevT;
+double prevTi;
 double omega_c = 1;
 
 
@@ -52,6 +47,7 @@ double eRprev;
 double eLprev;
 
 int T;
+int ti;
 //END OF DAVIDS STUFF
 
 
@@ -59,27 +55,24 @@ void setup() {
   
   Serial.begin(9600);
   ballaskSetup();
-  T = micros();
+
   
-  pinMode(potLpin, INPUT);
-  pinMode(tailLpin, OUTPUT);
->>>>>>> Stashed changes
+  
+  
+
+ 
+  
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-<<<<<<< Updated upstream
-
-=======
   //heyLetsTestTheMotor();
 
-  Update(false);
+  UpdateTailReading();
   //Serial.println(potL);
-  filter();
-  Serial.println(potLfilt);
-  int LSpeed = (int)((double)potL*((double)255/(double)1023));
-  writeToTails(LSpeed,0);
+//  Serial.println(potLfilt);
+//  int LSpeed = (int)((double)potL*((double)255/(double)1023));
+//  writeToTails(LSpeed,0);
   
   
->>>>>>> Stashed changes
 }

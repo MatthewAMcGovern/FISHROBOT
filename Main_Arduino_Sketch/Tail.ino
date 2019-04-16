@@ -1,25 +1,30 @@
 
 
-void Update(bool pid, set){
+void UpdateTailReading(){
   potRprev = potR;
   potLprev = potL;
   potL = analogRead(potLpin);
   potR = analogRead(potRpin);
   filter();
 
-  
-  
 }
 
 void setupTailSys(){
-  readPots();
-  filter();
+  pinMode(potLpin, INPUT);
+  pinMode(tailLpin, OUTPUT);
+  ti = micros();
+  potL = analogRead(potLpin);
+  potR = analogRead(potRpin);
+  potLfiltprev = PotL;
+  potRfiltprev = PotR;
+  UpdateTailReading();
   
 }
 
 void filter(){
-  prevT = T;
-  T = (micros()-prevT)*1e-6;
+  prevTi = ti;
+  ti = micros();
+  T = (ti-prevT)*1e-6;
   potLfiltprev = potLfilt;
   potLfilt = ((1.0-0.5*omega_c*T)/(1.0+0.5*omega_c*T))*potLfiltprev+(0.5*omega_c*T/(1.0+0.5*omega_c*T))*(potL+potLprev);
   potRfiltprev = potRfilt;
