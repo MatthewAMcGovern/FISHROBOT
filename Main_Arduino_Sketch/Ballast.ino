@@ -1,15 +1,16 @@
 // For RAMPS 1.4
 #define A_DIR_PIN          5
-#define A_STEP_PIN         9
-#define A_LIMIT            2
+#define A_STEP_PIN         2
+#define A_LIMIT            9
 
 
 #define B_DIR_PIN          6
-#define B_STEP_PIN        10
-#define B_LIMIT            3
+#define B_STEP_PIN         3
+#define B_LIMIT           10
 
 
 #define ENABLE_PIN         8
+
 
 
 //Macro to quickly switch pins high/low
@@ -57,9 +58,6 @@ void ballaskSetup() {
 
   digitalWrite(ENABLE_PIN, LOW);
 
-  attachInterrupt(digitalPinToInterrupt(A_LIMIT), ALimitTriggered, RISING);
-  attachInterrupt(digitalPinToInterrupt(B_LIMIT), BLimitTriggered, RISING);
-
   noInterrupts();
   TCCR1A = 0;
   TCCR1B = 0;
@@ -79,6 +77,8 @@ void ballaskSetup() {
   steppers[1].stepFunc = aStep;
   steppers[1].acceleration = 4000;
   steppers[1].minStepInterval = 200;
+
+  TIMER1_INTERRUPTS_ON
 }
 
 void resetStepper(volatile stepperInfo& si) {
@@ -88,7 +88,7 @@ void resetStepper(volatile stepperInfo& si) {
   si.stepCount = 0;
   si.n = 0;
   si.rampUpStepCount = 0;
-  si.movementDone = false;
+  si.movementDone = true;
 }
 
 volatile byte remainingSteppersFlag = 0;
@@ -134,7 +134,7 @@ void setNextInterruptInterval() {
   OCR1A = mind;
 }
 
-  ISR(TIMER1_COMPA_vect)
+ISR(TIMER1_COMPA_vect)
 {
   unsigned int tmpCtr = OCR1A;
 
@@ -148,6 +148,22 @@ void setNextInterruptInterval() {
     if ( ! (nextStepperFlag & (1 << i)) ) {
       steppers[i].di -= tmpCtr;
       continue;
+    }
+
+//    LIMIT CONTROL CODE
+    if (((~PINB) & B000110) && 0<steppers[i].dir)
+    {
+      Serial.println("hewwo");
+      if ((~PINB) & B000010)
+      {
+        resetStepper(steppers[0]);
+        remainingSteppersFlag  &= ~(1 << 1);
+      }
+      if ((~PINB) & B000100)
+      {
+        resetStepper(steppers[1]);
+        remainingSteppersFlag  &= ~(1 << 0);
+      }
     }
 
     volatile stepperInfo& s = steppers[i];
@@ -196,34 +212,38 @@ void stepperTest() {
 
   TIMER1_INTERRUPTS_ON
 
-  prepareMovement( 1,  10 );
-  setNextInterruptInterval();
-  delay(600);
-  prepareMovement( 1,  -10 );
-  setNextInterruptInterval();
-  delay(600);
-  prepareMovement( 1,  -800 );
-  setNextInterruptInterval();
-  delay(600);
-  prepareMovement( 1,  800 );
-  setNextInterruptInterval();
-  delay(600);
+  prepareMovement(1, -10);
+  prepareMovement(0, 100);
+  runAndWait();
+  prepareMovement(1, 100);
+  prepareMovement(0, -100);
+  runAndWait();
+
+  TIMER1_INTERRUPTS_OFF
+
 }
 
-void calibrateBallasts(bool ShouldWait){
-  prepareMovement(1, 99999999);
-  prepareMovement(0, 99999999);
-  setNextInterruptInterval();
-  while (remainingSteppersFlag && ShouldWait);
+void calibrateBallasts(){
+  TIMER1_INTERRUPTS_ON
+  prepareMovement(0,-1000);
+//  prepareMovement(1, 1000);
+  Serial.println("Start bop");
+  while (remainingSteppersFlag){
+    Serial.println("Commencing bop");
+  }
+  Serial.println("bop completed");
+  
+ 
+}
+void timer1(bool i){
+  if (i){
+    TIMER1_INTERRUPTS_ON
+  }
+  else{
+    TIMER1_INTERRUPTS_OFF
+  }
 }
 
-void ALimitTriggered(){
-  resetStepper(steppers[0]);
-}
-
-void BLimitTriggered(){
-  resetStepper(steppers[1]);
-}
 
 //PID SECTION BEGINS
 
