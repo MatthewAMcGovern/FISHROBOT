@@ -4,9 +4,11 @@
 #define A_LIMIT            9
 
 
+
 #define B_DIR_PIN          6
 #define B_STEP_PIN         3
 #define B_LIMIT           10
+
 
 
 #define ENABLE_PIN         8
@@ -151,20 +153,13 @@ ISR(TIMER1_COMPA_vect)
     }
 
 //    LIMIT CONTROL CODE
-    if (((~PINB) & B000110) && 0<steppers[i].dir)
+    steppers[i].limitTrip = ((~PINB) & (1<<(2-i)));
+    if (steppers[i].limitTrip & 0<steppers[i].dir)
     {
-      Serial.println("hewwo");
-      if ((~PINB) & B000010)
-      {
-        resetStepper(steppers[0]);
-        remainingSteppersFlag  &= ~(1 << 1);
-      }
-      if ((~PINB) & B000100)
-      {
-        resetStepper(steppers[1]);
-        remainingSteppersFlag  &= ~(1 << 0);
-      }
+      resetStepper(steppers[i]);
+      remainingSteppersFlag  &= ~(1 << i);
     }
+
 
     volatile stepperInfo& s = steppers[i];
 
@@ -208,6 +203,7 @@ void runAndWait() {
 }
 
 
+
 void stepperTest() {
 
   TIMER1_INTERRUPTS_ON
@@ -244,7 +240,10 @@ void timer1(bool i){
   }
 }
 
-
+void diagnosticBallast(){
+      Serial.println(steppers[0].limitTrip, BIN);
+      Serial.println(steppers[1].limitTrip, BIN);
+}
 //PID SECTION BEGINS
 
 

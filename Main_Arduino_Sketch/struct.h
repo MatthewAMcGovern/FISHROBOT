@@ -14,6 +14,7 @@ struct stepperInfo {
   volatile unsigned int totalSteps;        // number of steps requested for current movement
   volatile bool movementDone = false;      // true if the current movement has been completed (used by main program to wait for completion)
   volatile unsigned int rampUpStepCount;   // number of steps taken to reach either max speed, or half-way to the goal (will be zero until this number is known)
+  volatile bool limitTrip;
 
   // per iteration variables (potentially changed every interrupt)
   volatile unsigned int n;                 // index in acceleration curve, used to calculate next interval
