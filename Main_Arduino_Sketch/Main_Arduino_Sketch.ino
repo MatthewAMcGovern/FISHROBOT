@@ -1,54 +1,52 @@
-//
-
-
-
+#include <MPU6050.h>
 #include <PID_v1.h>
 #include "struct.h"
-
+#include "CustomGyroFish.h"
 
 //com stuff
 bool gyroFlag = 0;
+bool moveBallastFlag = 0;
 
 void setup() {
   Serial.begin(9600);
   Serial.println("**Welcome to FishOS**");
   ballaskSetup();
-  Gyrosetup();
 }
 
 void loop() {
-//  stepperTest();
-//  calibrateBallasts();
-//     Serial.println("goodbye");
-//COM STUFF
 
-  if (Serial.available() > 0){
+//COM STUFF
+  while (Serial.available()){
     switch (Serial.read()){
-    case 'F':
-      timer1(1);
+    case 'F': //Front Ballast
       prepareMovement(1, Serial.parseInt());
-      setNextInterruptInterval();
+      moveBallastFlag = true;
       break;
-    case 'B':
-      timer1(1);
+    case 'B': //Back Ballast
       prepareMovement(0, Serial.parseInt());
-      setNextInterruptInterval();
+      moveBallastFlag = true;
       break;
-    case 'D':
+    case 'D': //Diagnostic 
+//      stepperTest();
       Serial.println(PINB, BIN);
       diagnosticBallast();
       Serial.read();
-    case '\n':
       break;
     case 'G':
-      gyroFlag = !gyroFlag;  
-     default:
+      gyroFlag = !gyroFlag;
+      break;
+    //META CASES
+    case '\n':
+      if (moveBallastFlag){
+        timer1(1);
+        setNextInterruptInterval();
+        moveBallastFlag = false;
+        Serial.println("Larry");
+      }
+      break;
+    default:
       Serial.println("Invalid Character");
-       break;
+      break;
     }
   }
-//GYRO STUFF
-//  if (gyroFlag==1){
-//    gyroloop();
-//  }
 }

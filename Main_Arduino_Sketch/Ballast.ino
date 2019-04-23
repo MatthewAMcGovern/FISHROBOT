@@ -97,7 +97,6 @@ volatile byte remainingSteppersFlag = 0;
 
 void prepareMovement(int whichMotor, int steps) {
   volatile stepperInfo& si = steppers[whichMotor];
-  si.dirFunc( steps < 0 ? HIGH : LOW );
   si.dir = steps > 0 ? 1 : -1;
   si.totalSteps = abs(steps);
   resetStepper(si);
@@ -141,8 +140,10 @@ ISR(TIMER1_COMPA_vect)
   unsigned int tmpCtr = OCR1A;
 
   OCR1A = 65500;
-
+  
   for (int i = 0; i < NUM_STEPPERS; i++) {
+
+    volatile stepperInfo& s = steppers[i];
 
     if ( ! ((1 << i) & remainingSteppersFlag) )
       continue;
@@ -153,43 +154,52 @@ ISR(TIMER1_COMPA_vect)
     }
 
 //    LIMIT CONTROL CODE
-    steppers[i].limitTrip = ((~PINB) & (1<<(2-i)));
-    if (steppers[i].limitTrip & 0<steppers[i].dir)
+    bool endLimitReached = false;
+    s.limitTrip = ((~PINB) & (1<<(2-i)));
+    if (s.limitTrip & 0>s.dir)
     {
-      resetStepper(steppers[i]);
+      resetStepper(s);
+      s.stepPosition = 0;
       remainingSteppersFlag  &= ~(1 << i);
+      endLimitReached = true;
     }
-
-
-    volatile stepperInfo& s = steppers[i];
-
-    if ( s.stepCount < s.totalSteps ) {
-      s.stepFunc();
-      s.stepCount++;
-      s.stepPosition += s.dir;
-      if ( s.stepCount >= s.totalSteps ) {
-        s.movementDone = true;
-        remainingSteppersFlag &= ~(1 << i);
+    if (s.stepPosition >= 1100 && 0<s.dir){
+      resetStepper(s);
+      s.stepPosition = 1100;
+      remainingSteppersFlag  &= ~(1 << i);
+      endLimitReached = true;
+    }
+  
+    if (!endLimitReached){
+      if ( s.stepCount < s.totalSteps ) {
+        s.stepFunc();
+        s.stepCount++;
+        s.stepPosition += s.dir;
+        if ( s.stepCount >= s.totalSteps ) {
+          s.movementDone = true;
+          remainingSteppersFlag &= ~(1 << i);
+        }
       }
-    }
-
-    if ( s.rampUpStepCount == 0 ) {
-      s.n++;
-      s.d = s.d - (2 * s.d) / (4 * s.n + 1);
-      if ( s.d <= s.minStepInterval ) {
-        s.d = s.minStepInterval;
-        s.rampUpStepCount = s.stepCount;
+  
+  
+      if ( s.rampUpStepCount == 0 ) {
+        s.n++;
+        s.d = s.d - (2 * s.d) / (4 * s.n + 1);
+        if ( s.d <= s.minStepInterval ) {
+          s.d = s.minStepInterval;
+          s.rampUpStepCount = s.stepCount;
+        }
+        if ( s.stepCount >= s.totalSteps / 2 ) {
+          s.rampUpStepCount = s.stepCount;
+        }
       }
-      if ( s.stepCount >= s.totalSteps / 2 ) {
-        s.rampUpStepCount = s.stepCount;
+      else if ( s.stepCount >= s.totalSteps - s.rampUpStepCount ) {
+        s.d = (s.d * (4 * s.n + 1)) / (4 * s.n + 1 - 2);
+        s.n--;
       }
+  
+      s.di = s.d; // integer
     }
-    else if ( s.stepCount >= s.totalSteps - s.rampUpStepCount ) {
-      s.d = (s.d * (4 * s.n + 1)) / (4 * s.n + 1 - 2);
-      s.n--;
-    }
-
-    s.di = s.d; // integer
   }
 
   setNextInterruptInterval();
@@ -197,15 +207,7 @@ ISR(TIMER1_COMPA_vect)
   TCNT1  = 0;
 }
 
-void runAndWait() {
-  setNextInterruptInterval();
-  while ( remainingSteppersFlag );
-}
-
-
-
 void stepperTest() {
-
   TIMER1_INTERRUPTS_ON
 
   prepareMovement(1, -10);
@@ -216,21 +218,14 @@ void stepperTest() {
   runAndWait();
 
   TIMER1_INTERRUPTS_OFF
-
 }
 
-void calibrateBallasts(){
-  TIMER1_INTERRUPTS_ON
-  prepareMovement(0,-1000);
-//  prepareMovement(1, 1000);
-  Serial.println("Start bop");
-  while (remainingSteppersFlag){
-    Serial.println("Commencing bop");
-  }
-  Serial.println("bop completed");
-  
- 
+void runAndWait() {
+  setNextInterruptInterval();
+  while ( remainingSteppersFlag );
 }
+
+
 void timer1(bool i){
   if (i){
     TIMER1_INTERRUPTS_ON
@@ -243,8 +238,8 @@ void timer1(bool i){
 void diagnosticBallast(){
       Serial.println(steppers[0].limitTrip, BIN);
       Serial.println(steppers[1].limitTrip, BIN);
+      Serial.println(steppers[0].stepPosition);
+      Serial.println(steppers[1].stepPosition);
 }
+
 //PID SECTION BEGINS
-
-
-
