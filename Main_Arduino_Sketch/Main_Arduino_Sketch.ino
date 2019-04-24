@@ -1,4 +1,3 @@
-#include <MPU6050.h>
 #include <PID_v1.h>
 #include "struct.h"
 #include "CustomGyroFish.h"
@@ -11,6 +10,7 @@ void setup() {
   Serial.begin(9600);
   Serial.println("**Welcome to FishOS**");
   ballaskSetup();
+  gsetup();
 }
 
 void loop() {
@@ -41,12 +41,16 @@ void loop() {
         timer1(1);
         setNextInterruptInterval();
         moveBallastFlag = false;
-        Serial.println("Larry");
+        Serial.println("Moving");
       }
       break;
     default:
       Serial.println("Invalid Character");
       break;
     }
+  }
+// End Coms stuff
+  if(gyroFlag){
+    gloop2();
   }
 }

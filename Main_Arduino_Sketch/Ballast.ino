@@ -97,6 +97,7 @@ volatile byte remainingSteppersFlag = 0;
 
 void prepareMovement(int whichMotor, int steps) {
   volatile stepperInfo& si = steppers[whichMotor];
+  si.dirFunc( steps < 0 ? LOW : HIGH );
   si.dir = steps > 0 ? 1 : -1;
   si.totalSteps = abs(steps);
   resetStepper(si);
