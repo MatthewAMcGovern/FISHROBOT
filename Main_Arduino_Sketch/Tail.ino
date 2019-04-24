@@ -43,6 +43,9 @@ void setupTailSys(){
   loc.potR = analogRead(potRpin);
   loc.T = 0;
   loc.ReadTime = TIME;
+  Lmid = (LUbound + LLbound)/2;
+  Rmid = (RUbound + RLbound)/2;
+  
   for(int i = 0; i < s; i++){
     hist[i] = loc;
   }
@@ -133,12 +136,19 @@ void updateSetpointBuff(){
 //used to correlate frequency and pwm output
 double BaseOutput(double freq){
   // need regression for baseline guess on certain frequency
+  return 115;
+}
+
+
+void runStartSequence(TailDataFrame* data){
+  moveToStartL(data);
+  moveToStartR(data);
   
 }
 
 void moveToStartL(TailDataFrame* data){
   if(!LEngaged){
-    writeToTails(105,-1);
+    writeToTails(110,-1);
     if(!(data[0].Lvel > 0 ^ LStartVel)){
       if(LStartVel){
         if(data[0].potL >= Lmid){
@@ -161,7 +171,7 @@ void moveToStartL(TailDataFrame* data){
 
 void moveToStartR(TailDataFrame* data){
   if(!REngaged){
-    writeToTails(-1, 105);
+    writeToTails(-1, 110);
     if(!(data[0].Rvel > 0 ^ RStartVel)){
       if(LStartVel){
         if(data[0].potR >= Rmid){
@@ -180,6 +190,13 @@ void moveToStartR(TailDataFrame* data){
   }
   else{
     writeToTails(-1, 0);
+  }
+}
+
+void StartSequenceBlocking(){
+  while(!(REngaged && LEngaged)){
+    UpdateTailReading();
+    runStartSequence(Filt);
   }
 }
 

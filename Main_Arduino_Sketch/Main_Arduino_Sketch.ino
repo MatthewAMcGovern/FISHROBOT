@@ -70,16 +70,16 @@ double kdL;
 bool REngaged = false;
 bool LEngaged = false;
 bool RStartVel = false; //false for negative
-bool LStartVel = true; //true for positive
+bool LStartVel = false; //true for positive
 
 //error on tails
 
 
 //potentiometer bounds
-int LUbound;
-int LLbound;
-int RUbound;
-int RLbound;
+int LUbound = 581;
+int LLbound = 476;
+int RUbound = 0;
+int RLbound = 0;
 double Rmid;
 double Lmid;
 
@@ -107,6 +107,7 @@ void setup() {
   
   Serial.begin(9600);  
   setupTailSys();
+  
 //  delay(3000);
 //  LSpeed = 250;
 //  writeToTails(LSpeed,0);
@@ -114,9 +115,10 @@ void setup() {
 //  LSpeed = 80;
 //  writeToTails(LSpeed,0);
 //  delay(7000);
+  writeToTails(0,0);
+  delay(3000);
   
-  
-
+StartSequenceBlocking();
 }
 
 void loop() {
@@ -126,13 +128,14 @@ void loop() {
   UpdateTailReading();
 //  Serial.println(potL);
 //  LSpeed = 105;
-  Serial.print(hist[0].potR);
-  Serial.print(", ");
-  Serial.print(millis()/1000.0);
-  Serial.print(", ");
-  
-//  Serial.println(potLfilt);
+  Serial.print(Filt[0].potL);
+  Serial.print(" ");
+  Serial.print(Filt[0].potR);
+  Serial.print(" ");
+  Serial.print(millis());
+  Serial.print(" ");
   int LSpeed = (int)((double)hist[0].potR*((double)255/(double)1023));
+  
   writeToTails(LSpeed,0);
   
   
