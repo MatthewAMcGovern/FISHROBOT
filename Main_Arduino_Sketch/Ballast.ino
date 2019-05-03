@@ -73,12 +73,12 @@ void ballaskSetup() {
   steppers[0].dirFunc = bDir;
   steppers[0].stepFunc = bStep;
   steppers[0].acceleration = 4000;
-  steppers[0].minStepInterval = 200;
+  steppers[0].minStepInterval = 600;
 
   steppers[1].dirFunc = aDir;
   steppers[1].stepFunc = aStep;
   steppers[1].acceleration = 4000;
-  steppers[1].minStepInterval = 200;
+  steppers[1].minStepInterval = 600;
 
   TIMER1_INTERRUPTS_ON
 }
@@ -235,12 +235,29 @@ void timer1(bool i){
     TIMER1_INTERRUPTS_OFF
   }
 }
-
+void calibrateBallast(){
+  timer1(1);
+  prepareMovement(1, -1200);
+  prepareMovement(0, -1200);
+  runAndWait();
+  prepareMovement(1, 1100);
+  prepareMovement(0, 1100);
+  runAndWait();
+  
+}
 void diagnosticBallast(){
-      Serial.println(steppers[0].limitTrip, BIN);
-      Serial.println(steppers[1].limitTrip, BIN);
-      Serial.println(steppers[0].stepPosition);
-      Serial.println(steppers[1].stepPosition);
+  Serial.println(steppers[0].limitTrip, BIN);
+  Serial.println(steppers[1].limitTrip, BIN);
+  Serial.println(steppers[0].stepPosition);
+  Serial.println(steppers[1].stepPosition);
 }
 
+void ballastMoveToPos(int i, double absPos){
+    prepareMovement(i, absPos-steppers[i].stepPosition);
+}
+void BallastPIDCompute(double pidOutput, double boyancySetup){
+  double Bimple, Bomble;
+  ballastMoveToPos(1,pidOutput + boyancySetup);
+  ballastMoveToPos(1,pidOutput - boyancySetup);  
+}
 //PID SECTION BEGINS
