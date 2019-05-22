@@ -1,13 +1,15 @@
 // For RAMPS 1.4
+#include <PID_v1.h>
+
 #define A_DIR_PIN          5
 #define A_STEP_PIN         2
-#define A_LIMIT            9
+#define A_LIMIT            4
 
 
 
 #define B_DIR_PIN          6
 #define B_STEP_PIN         3
-#define B_LIMIT           10
+#define B_LIMIT            7
 
 
 
@@ -26,6 +28,12 @@
 #define TIMER1_INTERRUPTS_ON    TIMSK1 |=  (1 << OCIE1A);
 #define TIMER1_INTERRUPTS_OFF   TIMSK1 &= ~(1 << OCIE1A);
 
+//PID SECTION BEGINS
+double Setpoint = 72.46;
+double PIDInput, PIDOutput = 127;
+double Kp=2, Ki=5, Kd=1;
+
+PID myPID(&PIDInput, &PIDOutput, &Setpoint, Kp, Ki, Kd, DIRECT);
 
 void aStep() {
   A_STEP_HIGH
@@ -81,6 +89,10 @@ void ballaskSetup() {
   steppers[1].minStepInterval = 600;
 
   TIMER1_INTERRUPTS_ON
+
+  //PID
+  myPID.SetMode(AUTOMATIC);
+  myPID.SetSampleTime(500);
 }
 
 void resetStepper(volatile stepperInfo& si) {
@@ -156,20 +168,20 @@ ISR(TIMER1_COMPA_vect)
 
 //    LIMIT CONTROL CODE
     bool endLimitReached = false;
-    s.limitTrip = ((~PINB) & (1<<(2-i)));
-    if (s.limitTrip & 0>s.dir)
-    {
-      resetStepper(s);
-      s.stepPosition = 0;
-      remainingSteppersFlag  &= ~(1 << i);
-      endLimitReached = true;
-    }
-    if (s.stepPosition >= 1100 && 0<s.dir){
-      resetStepper(s);
-      s.stepPosition = 1100;
-      remainingSteppersFlag  &= ~(1 << i);
-      endLimitReached = true;
-    }
+//    s.limitTrip = ((~PINB) & (1<<(2-i)));
+//    if (s.limitTrip & 0>s.dir)
+//    {
+//      resetStepper(s);
+//      s.stepPosition = 0;
+//      remainingSteppersFlag  &= ~(1 << i);
+//      endLimitReached = true;
+//    }
+//    if (s.stepPosition >= 1100 && 0<s.dir){
+//      resetStepper(s);
+//      s.stepPosition = 1100;
+//      remainingSteppersFlag  &= ~(1 << i);
+//      endLimitReached = true;
+//    }
   
     if (!endLimitReached){
       if ( s.stepCount < s.totalSteps ) {
@@ -253,11 +265,19 @@ void diagnosticBallast(){
 }
 
 void ballastMoveToPos(int i, double absPos){
-    prepareMovement(i, absPos-steppers[i].stepPosition);
+  prepareMovement(i, absPos-steppers[i].stepPosition);
 }
-void BallastPIDCompute(double pidOutput, double boyancySetup){
-  double Bimple, Bomble;
-  ballastMoveToPos(1,pidOutput + boyancySetup);
-  ballastMoveToPos(1,pidOutput - boyancySetup);  
+
+void BallastPIDCompute(double boyancyTarget){
+  getRoll();
+  PIDInput = double(getRoll());
+  myPID.Compute();
+  Serial.println(PIDInput);
+  Serial.println(PIDOutput-127);
+  ballastMoveToPos(1,int(boyancyTarget - PIDOutput-127));
+  ballastMoveToPos(0,int(boyancyTarget + PIDOutput-127));  
+  setNextInterruptInterval();
 }
-//PID SECTION BEGINS
+void setSetpoint(){
+  Setpoint = double(globRoll);
+}

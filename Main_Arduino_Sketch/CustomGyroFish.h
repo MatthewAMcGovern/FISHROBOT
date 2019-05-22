@@ -142,19 +142,10 @@ void gloop1() {
     #endif
 }
 
-void gloop2(){
+float getRoll(){
   accelgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
   short tempa[3] = {ax,ay,az};
   short tempg[3] = {gx,gy,gz};
   ComplementaryFilter(tempa, tempg ,&globPitch,&globRoll);
-  Serial.print(globPitch);
-  Serial.print(' ');
-  Serial.println(globRoll); 
-}
-
-void gloop3(){
-  accelgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
-  short tempa[3] = {ax,ay,az};
-  short tempg[3] = {gx,gy,gz};
-  ComplementaryFilter(tempa, tempg ,&globPitch,&globRoll);
+  return globRoll;
 }
